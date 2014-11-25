@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+
+  "name": "Gmail Tabs",
+  "description": "This extension implements email tabs for Gmail.",
+  "version": "1.0",
+
+  "content_scripts": [
+  {
+    "matches": ["https://mail.google.com/mail/*"],
+    "css": ["background.css"],
+    "js": ["content_script.js"]
+  }
+  ],
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+  "permissions": [
+    "activeTab", "tabs", "storage"
+  ],
+
+  "browser_action": {
+    "default_icon": "icon.png"
+  }
+}

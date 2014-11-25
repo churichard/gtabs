@@ -1,0 +1,23 @@
+#button {
+	-webkit-border-radius: 0;
+	-moz-border-radius: 0;
+	border-radius: 0px;
+	width: 80px;
+	height: 30px;
+	text-align: center;
+	font-family: Arial;
+	font-size: 15px;
+	color: #ffffff;
+	background: #3cb0fd;
+	padding: 5px 5px 5px 5px;
+	margin: 5px 5px 5px 30px;
+	text-decoration: none;
+
+	background: #3cb0fd;
+	background-image: -webkit-linear-gradient(top, #3cb0fd, #3498db);
+	background-image: -moz-linear-gradient(top, #3cb0fd, #3498db);
+	background-image: -ms-linear-gradient(top, #3cb0fd, #3498db);
+	background-image: -o-linear-gradient(top, #3cb0fd, #3498db);
+	background-image: linear-gradient(to bottom, #3cb0fd, #3498db);
+	text-decoration: none;
+}
