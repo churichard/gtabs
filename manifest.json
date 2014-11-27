@@ -8,13 +8,13 @@
   "content_scripts": [
   {
     "matches": ["https://mail.google.com/mail/*"],
-    "css": ["background.css"],
-    "js": ["content_script.js"]
+    "css": ["css/background.css", "materialize_v0.82/css/materialize.css"],
+    "js": ["js/content_script.js", "js/jquery-2.1.1.min.js", "materialize_v0.82/js/materialize.min.js"]
   }
   ],
 
   "background": {
-    "scripts": ["background.js"]
+    "page": "background.html"
   },
 
   "permissions": [

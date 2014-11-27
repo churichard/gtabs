@@ -15,17 +15,19 @@ function init() {
 	tabLocation = document.querySelectorAll('div[class]')[4];
 
 	/* Creates the new tab button and adds an event listener */
-	var tab = createButton();
-	tab.innerHTML = '<button type="button" name=' + 0 + ' id="button">New Tab</button>';
-	tab.querySelector('button').addEventListener('click', newTabClickHandler, true);
-
-	/* Creates Tab 1 and adds an event listener */
-	tab = createButton();
-	tab.innerHTML = '<button type="button" name=' + 1 + ' id="button">Tab 1</button>';
-	tab.querySelector('button').addEventListener('click', emailTabClickHandler, true);
+	var tab = document.createElement('tab');
+	tabLocation.parentElement.insertAdjacentElement('beforebegin', tab);
+	//tab.innerHTML = '<button class="btn" type="tabButton" name=' + 0 + '>+</button>';
+	//tab.querySelector('button').addEventListener('click', newTabClickHandler, true);
+	//tab.innerHTML = '<a class="small button" type="tabButton" name=' + 0 + '>+</a>';
+	tab.innerHTML = '<a class="waves-effect waves-light btn" type="tabButton" name=' + 0 + '>+</a>';
+	tab.querySelector('a[type="tabButton"]').addEventListener('click', newTabClickHandler, true);
 
 	/* Number of tabs */
-	numTabs = 2;
+	numTabs = 1;
+
+	/* Creates Tab 1 and adds an event listener */
+	createButton();
 
 	/* Current tab */
 	currentTab = 1;
@@ -65,21 +67,24 @@ function init() {
 /* Creates a tab button. */
 function createButton(e) {
 	var tab = document.createElement('tab');
-	tabLocation.parentElement.insertAdjacentElement('beforebegin',tab);
-	return tab;
+	tabLocation.parentElement.insertAdjacentElement('beforebegin', tab);
+	//tab.innerHTML = '<button class="btn" type="tabButton" name=' + numTabs + '>Tab ' + numTabs + '</button>';
+	//tab.querySelector('button').addEventListener('click', emailTabClickHandler, true);
+	//tab.innerHTML = '<a class="small button" type="tabButton" name=' + numTabs+ '>Tab ' + numTabs + '</a>';
+	tab.innerHTML = '<a class="waves-effect waves-light btn" type="tabButton" name=' + numTabs + '>Tab ' + numTabs + '</a>';
+	tab.querySelector('a[type="tabButton"]').addEventListener('click', emailTabClickHandler, true);
+	
+	numTabs++; // Increment the tab number
 }
 
 /* Runs when the new tab button is clicked. */
 function newTabClickHandler(e) {
-	var tab = createButton();
-	tab.innerHTML = '<button type="button" name=' + numTabs + ' id="button">Tab ' + numTabs + '</button>';
-	tab.querySelector('button').addEventListener('click', emailTabClickHandler, true);
+	createButton();
 
 	tabArray.push(numTabs);
 	tabUrlArray.push(gmailUrl);
 	saveTabs(); // Save tabs
 	saveUrls(); // Save URLs
-	numTabs++; // Increment the tab number
 }
 
 /* Runs when an email tab is clicked. */
@@ -134,11 +139,7 @@ function loadTabs() {
 
 				/* Rendering tabs in Gmail */
 				for (var i = 0; i < arrayLength; i++) {
-					var tab = createButton();
-					tab.innerHTML = '<button type="button" name=' + numTabs + ' id="button">Tab ' + numTabs + '</button>';
-					tab.querySelector('button').addEventListener('click', emailTabClickHandler, true);
-
-					numTabs++;
+					createButton();
 				}
 			});
 		}

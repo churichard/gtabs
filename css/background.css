@@ -1,0 +1,12 @@
+.btn, .btn-large, .btn-flat {
+	margin: 5px 10px 1px 10px !important;
+	padding: 0 1rem !important;
+}
+
+.btn, .btn-large {
+	-webkit-transition: 0.15s ease-out !important;
+	-moz-transition: 0.15s ease-out !important;
+	-o-transition: 0.15s ease-out !important;
+	-ms-transition: 0.15s ease-out !important;
+	transition: 0.15s ease-out !important;
+}
