@@ -18,11 +18,11 @@ function init() {
 	/* Creates the new tab button and adds an event listener */
 	var tab = document.createElement('tab');
 	tabLocation.parentElement.insertAdjacentElement('beforebegin', tab);
-	tab.innerHTML = '<a class="waves-effect waves-light new-tab-btn btn" type="tabButton" name=' + 0 + '>+</a>';
+	tab.innerHTML = '<a class="waves-effect waves-light new-tab-btn btn" type="tabButton" id=' + 0 + '>+</a>';
 	tab.querySelector('a[type="tabButton"]').addEventListener('click', newTabClickHandler, true);
 
 	/* Number of tabs */
-	numTabs = 0;
+	numTabs = 1;
 
 	/* Initializes closeURL */
 	closeURL = chrome.extension.getURL("img/close.png");
@@ -54,33 +54,43 @@ function init() {
 	/* Event listener for page changes */
 	chrome.runtime.onMessage.addListener(
 		function(request, sender, sendResponse) {
-			tabUrlArray[currentTab-1] = request.url;
+			var currentTabIndex = tabArray.indexOf(currentTab);
+			tabUrlArray[currentTabIndex] = request.url;
 			saveUrls();
 			console.log("Tab " + currentTab + " URL saved: " + request.url);
 		});
 }
 
 /* Creates a tab button. */
-function createButton(e) {
-	numTabs++; // Increment the tab number
+function createButton(tabNum) {
+	if (tabNum == -1) {
+		// Look for the next available tab number
+		while (tabArray.indexOf(numTabs) != -1) {
+			numTabs++;
+		}
+
+		tabNum = numTabs;
+	}	
 
 	// Initialize tab button
 	var tab = document.createElement('tab');
 	tabLocation.parentElement.insertAdjacentElement('beforebegin', tab);
-	tab.innerHTML = '<a class="waves-effect waves-light btn" type="tabButton" name=' + numTabs + '>Tab ' + numTabs + '</a>';
+	tab.innerHTML = '<a class="waves-effect waves-light btn" type="tabButton" id=' + tabNum + '>Tab ' + tabNum + '</a>';
 	tab.querySelector('a[type="tabButton"]').addEventListener('click', emailTabClickHandler, true);
 
 	// Initialize close button
 	var closeTab = document.createElement('close');
 	tabLocation.parentElement.insertAdjacentElement('beforebegin', closeTab);
-	closeTab.innerHTML = '<a class="waves-effect waves-light close-btn btn" type="closeButton" name=' + numTabs + '>'
-	+ '<img src=' + closeURL + ' alt="" name=' + numTabs + ' height="16px" width="16px"/></a>';
+	var closeID = "close" + tabNum;
+	var imageID = "image" + tabNum;
+	closeTab.innerHTML = '<a class="waves-effect waves-light close-btn btn" type="closeButton" id=' + closeID + '>'
+	+ '<img src=' + closeURL + ' alt="" id=' + imageID + ' height="16px" width="16px"/></a>';
 	closeTab.querySelector('a[type="closeButton"]').addEventListener('click', closeTabClickHandler, true);
 }
 
 /* Runs when the new tab button is clicked. */
 function newTabClickHandler(e) {
-	createButton();
+	createButton(-1);
 
 	tabArray.push(numTabs);
 	tabUrlArray.push(gmailUrl);
@@ -100,7 +110,7 @@ function newTabClickHandler(e) {
 /* Runs when an email tab is clicked. */
 function emailTabClickHandler(e) {
 	var prevTab = currentTab; // Stores the current tab
-	currentTab = e.target.name; // Updates the current tab
+	currentTab = parseInt(e.target.id); // Updates the current tab
 
 	// Change tab colors
 	updateColor(prevTab);
@@ -112,7 +122,12 @@ function emailTabClickHandler(e) {
 
 /* Runs when a close tab button is clicked. */
 function closeTabClickHandler(e) {
-	removeTab(e.target.parentNode.name);
+	var id = e.target.parentNode.id;
+
+	if (id.length == 0)
+		id = e.target.id;
+
+	removeTab(id);
 }
 
 /* Stores the tabs that the user has open. */
@@ -137,7 +152,7 @@ function saveTabs() {
 function loadTabs() {
 	chrome.storage.local.getBytesInUse('tabs', function(bytesInUse) {
 		if (bytesInUse > 0) {
-			console.log("There is memory left");
+			console.log("There is memory in storage");
 
 			/* Getting tabs from memory and storing them into tabArray */
 			chrome.storage.local.get('tabs', function(tabs) {
@@ -155,7 +170,7 @@ function loadTabs() {
 
 				/* Rendering tabs in Gmail */
 				for (var i = 0; i < arrayLength; i++) {
-					createButton();
+					createButton(tabArray[i]);
 				}
 			});
 
@@ -169,9 +184,9 @@ function loadTabs() {
 			});
 		}
 		else {
-			console.log("There is no memory left");
+			console.log("There is no memory in storage");
 
-			createButton();
+			createButton(-1);
 
 			tabArray.push(numTabs);
 			tabUrlArray.push(gmailUrl);
@@ -193,7 +208,8 @@ function saveUrls() {
     // Save it using the Chrome extension storage API.
     chrome.storage.local.set({'urls': urlJson}, function() {
         // Notify that we saved.
-        console.log('Tab URL settings saved: ' + tabUrlArray[currentTab-1] + ' was saved.');
+        var currentTabIndex = tabArray.indexOf(currentTab);
+        console.log('Tab URL settings saved: ' + tabUrlArray[currentTabIndex] + ' was saved.');
     });
 }
 
@@ -204,10 +220,12 @@ function goToUrl(prevTab) {
 		var tempUrlArray = JSON.parse(JSON.parse(JSON.stringify(urls)).urls);
 
 		// URL corresponding with the button
-		var url = tempUrlArray[currentTab-1];
+		var currentTabIndex = tabArray.indexOf(currentTab);
+		var url = tempUrlArray[currentTabIndex];
 
 		// Update URL
-		if (url != tabUrlArray[prevTab-1]) {
+		var prevTabIndex = tabArray.indexOf(prevTab);
+		if (url != tabUrlArray[prevTabIndex]) {
 			chrome.runtime.sendMessage({tag: url}, function(response) {
 				console.log(response.message);
 			});
@@ -238,21 +256,18 @@ function loadUrls() {
 /* Removes a tab from memory. */
 function removeTab(name) {
 	// Get the tab number to be removed
-	var num = parseInt(name);
+	var num = parseInt(name.substring(5, name.length));
 
 	// Remove the tab from arrays
-	var tabIndex = tabArray.indexOf(num-1);
+	var tabIndex = tabArray.indexOf(num);
 	tabArray.splice(tabIndex, 1);
 	tabUrlArray.splice(tabIndex, 1);
 
-	var elements = document.getElementsByName(num);
-
 	// Remove the tab from the screen
-	// THERE IS A PROBLEM WHEN YOU TRY TO REMOVE TABS THAT ARE IN THE MIDDLE
-	// THERE IS A PROBLEM HERE - PROBABLY WHEN THE TAB BUTTONS ARE BEING REMOVED
-	for (var i = 0; i < elements.length; i++) {
-		elements[i].parentNode.parentNode.removeChild(elements[i].parentNode);
-	}
+	var tabElement = document.getElementById(num);
+	var closeElement = document.getElementById(name);
+	tabElement.parentNode.removeChild(tabElement);
+	closeElement.parentNode.parentNode.removeChild(closeElement.parentNode);
 
 	// Save changes
 	saveTabs();
@@ -269,6 +284,7 @@ function removeTab(name) {
 	// Handles if you remove the current tab
 	else if (currentTab == num) {
 		currentTab = tabArray[0];
+		console.log("Trying to change color - current tab is " + tabArray[0]);
 		updateColor(-1);
 
 		// Save changes
@@ -280,11 +296,11 @@ function removeTab(name) {
 function updateColor(prevTab) {
 	if (prevTab > 0) {
 		// Change the color of the previous tab back to gray
-		var tab = document.getElementsByName(prevTab)[0];
+		var tab = document.getElementById(prevTab);
 		tab.style.backgroundColor = "#E0E0E0";
 	}
 
 	// Change the color of the current tab to blue
-	tab = document.getElementsByName(currentTab)[0];
+	tab = document.getElementById(currentTab);
 	tab.style.backgroundColor = "#42A5F5";
 }
