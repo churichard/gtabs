@@ -36,7 +36,7 @@
   -o-transform: scale(0);
   transform: scale(0);
 }
-.waves-effect.waves-light .waves-ripple {
+.waves-effect .waves-light .waves-ripple {
   background-color: rgba(255, 255, 255, 0.35);
 }
 
@@ -156,7 +156,7 @@
 .btn, .btn-large {
   text-decoration: none;
   color: #FFFFFF;
-  background-color: #2196F3;
+  background-color: #E0E0E0;
   text-align: center;
   letter-spacing: .8px;
   -webkit-transition: 0.2s ease-out;
@@ -166,7 +166,7 @@
   transition: 0.2s ease-out;
 }
 .btn:hover, .btn-large:hover {
-  background-color: #39a1f4;
+  background-color: #2196F3;
 }
 
 .btn-floating {

@@ -23,7 +23,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 		});
 	});
 
-	// Clears the storage
+	//Clears the storage
 	// if (changeInfo.url == undefined){
 	// 	chrome.storage.sync.clear();
 	// }
