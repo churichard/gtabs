@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
 
-  "name": "Gmail Tabs",
-  "description": "This extension implements email tabs for Gmail.",
+  "name": "Gtabs",
+  "description": "Adds email tabs to Gmail.",
   "version": "1.0",
 
   "content_scripts": [
@@ -23,9 +23,5 @@
 
   "web_accessible_resources": [
     "img/*.png"
-  ],
-
-  "browser_action": {
-    "default_icon": "img/icon.png"
-  }
+  ]
 }
