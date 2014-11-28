@@ -10,6 +10,13 @@ chrome.runtime.onMessage.addListener(
 			gmailUrl += "#inbox";
 			sendResponse({url: gmailUrl});
 		}
+		else if (request.tag == "closeGmail") {
+			chrome.tabs.query({active: true, currentWindow: true}, function(arrayOfTabs) {
+				var activeTabId = arrayOfTabs[0].id;
+
+				chrome.tabs.remove(activeTabId);
+			});
+		}
 		else {
 			chrome.tabs.update({url: request.tag});
 			sendResponse({message: "Went to URL: " + request.tag});
