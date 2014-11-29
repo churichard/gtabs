@@ -15,15 +15,15 @@
 }
 
 .btn:hover, .btn-large:hover {
-  background-color: #2196F3 !important;
+	background-color: #2196F3 !important;
 }
 
 .new-tab-btn:hover, .btn-large:hover {
-  background-color: #4CAF50 !important;
+	background-color: #4CAF50 !important;
 }
 
 .close-btn:hover, .btn-large:hover {
-  background-color: #D32F2F !important;
+	background-color: #D32F2F !important;
 }
 
 .close-btn, .btn-large, .btn-flat {

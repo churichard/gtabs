@@ -6,6 +6,7 @@ var tabUrlArray; // Array of tab URLs
 var gmailUrl; // URL of Gmail
 var currentTab; // Current tab that the user is on
 var closeURL; // URL of close.png image
+var location; // Location of the user in Gmail
 
 /* Call init function */
 init();
@@ -44,38 +45,45 @@ function init() {
 		gmailUrl = response.url;
 		console.log("gmailURL is " + gmailUrl.toString());
 
-		/* Get saved tabs, if there are any */
-		loadTabs();
-
 		/* Get saved urls */
 		loadUrls();
+
+		/* Get saved tabs, if there are any */
+		loadTabs();
 	});
 
 	/* Event listener for page changes */
 	chrome.runtime.onMessage.addListener(
 		function(request, sender, sendResponse) {
+			// Update the tab url
 			var currentTabIndex = tabArray.indexOf(currentTab);
 			tabUrlArray[currentTabIndex] = request.url;
+			// Save the urls
 			saveUrls();
+			// Update the title of the tab
+			updateTitle(currentTabIndex);
+
 			console.log("Tab " + currentTab + " URL saved: " + request.url);
 		});
 }
 
 /* Creates a tab button. */
-function createButton(tabNum) {
-	if (tabNum == -1) {
+function createButton(tabNum, tabName) {
+	if (tabNum == null) {
 		// Look for the next available tab number
 		while (tabArray.indexOf(numTabs) != -1) {
 			numTabs++;
 		}
 
-		tabNum = numTabs;
-	}	
+		var tabNum = numTabs;
+	}
+
+	console.log("LOCATION IS " + location);
 
 	// Initialize tab button
 	var tab = document.createElement('tab');
 	tabLocation.parentElement.insertAdjacentElement('beforebegin', tab);
-	tab.innerHTML = '<a class="waves-effect waves-light btn" type="tabButton" id=' + tabNum + '>Tab ' + tabNum + '</a>';
+	tab.innerHTML = '<a class="waves-effect waves-light btn" type="tabButton" id=' + tabNum + ' value= ' + tabName + '>' + tabName + '</a>';
 	tab.querySelector('a[type="tabButton"]').addEventListener('click', emailTabClickHandler, true);
 
 	// Initialize close button
@@ -89,11 +97,11 @@ function createButton(tabNum) {
 }
 
 /* Runs when the new tab button is clicked. */
-function newTabClickHandler(e) {
-	createButton(-1);
-
+function newTabClickHandler() {
 	tabArray.push(numTabs);
 	tabUrlArray.push(gmailUrl);
+
+	createButton(null, getTitle(tabUrlArray.length-1));
 
 	saveUrls(); // Save URLs
 
@@ -102,7 +110,7 @@ function newTabClickHandler(e) {
 	currentTab = numTabs;
 	updateColor(prevTab);
 
-	goToUrl(prevTab); // Go to new URL
+	goToUrl(prevTab, null, null); // Go to new URL
 
 	saveTabs(); // Save tabs
 }
@@ -115,7 +123,7 @@ function emailTabClickHandler(e) {
 	// Change tab colors
 	updateColor(prevTab);
 
-	goToUrl(prevTab); // Go to new URL
+	goToUrl(prevTab, null, null); // Go to new URL
 
 	saveTabs(); // Save tabs
 }
@@ -170,7 +178,7 @@ function loadTabs() {
 
 				/* Rendering tabs in Gmail */
 				for (var i = 0; i < arrayLength; i++) {
-					createButton(tabArray[i]);
+					createButton(tabArray[i], getTitle(i));
 				}
 			});
 
@@ -180,19 +188,19 @@ function loadTabs() {
 				console.log("Current tab has been retrieved: " + currentTab);
 
 				// Update tab colors
-				updateColor(-1);
+				updateColor(null);
 			});
 		}
 		else {
 			console.log("There is no memory in storage");
 
-			createButton(-1);
-
 			tabArray.push(numTabs);
 			tabUrlArray.push(gmailUrl);
 
+			createButton(null, getTitle(tabUrlArray.length-1));
+
 			// Update tab colors
-			updateColor(-1);
+			updateColor(null);
 
 			saveUrls(); // Save URLs
 			saveTabs(); // Save tabs
@@ -214,18 +222,22 @@ function saveUrls() {
 }
 
 /* Gets the URL associated with the tab from memory and goes to it. */
-function goToUrl(prevTab) {
+function goToUrl(prevTab, tempTabArray, tempUrlArray) {
 	chrome.storage.local.get('urls', function(urls) {
-		// Converts JSON to array of strings
-		var tempUrlArray = JSON.parse(JSON.parse(JSON.stringify(urls)).urls);
+		if (tempTabArray == null && tempUrlArray == null) {
+			// Converts JSON to array of strings
+			tempUrlArray = JSON.parse(JSON.parse(JSON.stringify(urls)).urls);
+			tempTabArray = tabArray;
+		}
 
 		// URL corresponding with the button
-		var currentTabIndex = tabArray.indexOf(currentTab);
+		var currentTabIndex = tempTabArray.indexOf(currentTab);
 		var url = tempUrlArray[currentTabIndex];
 
 		// Update URL
-		var prevTabIndex = tabArray.indexOf(prevTab);
-		if (url != tabUrlArray[prevTabIndex]) {
+		var prevTabIndex = tempTabArray.indexOf(prevTab);
+
+		if (url != tempUrlArray[prevTabIndex]) {
 			chrome.runtime.sendMessage({tag: url}, function(response) {
 				console.log(response.message);
 			});
@@ -255,46 +267,54 @@ function loadUrls() {
 
 /* Removes a tab from memory. */
 function removeTab(name) {
-	// Get the tab number to be removed
-	var num = parseInt(name.substring(5, name.length));
-
-	// Remove the tab from arrays
-	var tabIndex = tabArray.indexOf(num);
-	tabArray.splice(tabIndex, 1);
-	tabUrlArray.splice(tabIndex, 1);
-
-	// Remove the tab from the screen
-	var tabElement = document.getElementById(num);
-	var closeElement = document.getElementById(name);
-	tabElement.parentNode.removeChild(tabElement);
-	closeElement.parentNode.parentNode.removeChild(closeElement.parentNode);
-
-	// Save changes
-	saveTabs();
-	saveUrls();
-
 	// Handles if there are no tabs left
-	if (tabArray.length == 0) {
+	if (tabArray.length == 1) {
 		// Clears the storage
 		chrome.storage.local.clear();
 
 		// Closes the Gmail tab
 		chrome.runtime.sendMessage({tag: "closeGmail"}, function(response) {});
 	}
-	// Handles if you remove the current tab
-	else if (currentTab == num) {
-		currentTab = tabArray[0];
-		console.log("Trying to change color - current tab is " + tabArray[0]);
-		updateColor(-1);
+	else {
+		// Get the tab number to be removed
+		var num = parseInt(name.substring(5, name.length));
 
-		// Save changes
-		saveTabs();
+		var tempTabArray = tabArray.slice(0);
+		var tempUrlArray = tabUrlArray.slice(0);
+
+		// Remove the tab from tabArray and tabUrlArray
+		var tabIndex = tabArray.indexOf(num);
+		tabArray.splice(tabIndex, 1);
+		tabUrlArray.splice(tabIndex, 1);
+
+		// Remove the tab from the screen
+		var tabElement = document.getElementById(num);
+		var closeElement = document.getElementById(name);
+		tabElement.parentNode.removeChild(tabElement);
+		closeElement.parentNode.parentNode.removeChild(closeElement.parentNode);
+
+		// Handles if you remove the current tab
+		if (currentTab == num) {
+			var prevTab = currentTab;
+			// Update the current tab
+			currentTab = tabArray[0];
+
+			// Update colors
+			updateColor(null);
+
+			// Go to new url
+			goToUrl(prevTab, tempTabArray, tempUrlArray);
+		}
 	}
+
+	// Save changes
+	saveTabs();
+	saveUrls();
 }
 
 /* Updates the color of the current tab. */
 function updateColor(prevTab) {
-	if (prevTab > 0) {
+	if (prevTab != null) {
 		// Change the color of the previous tab back to gray
 		var tab = document.getElementById(prevTab);
 		tab.style.backgroundColor = "#E0E0E0";
@@ -303,4 +323,19 @@ function updateColor(prevTab) {
 	// Change the color of the current tab to blue
 	tab = document.getElementById(currentTab);
 	tab.style.backgroundColor = "#42A5F5";
+}
+
+/* Gets the title of the tab. */
+function getTitle(index) {
+	var rawUrl = tabUrlArray[index];
+	var loc = rawUrl.split("/")[6];
+	var url = loc.substring(1, loc.length);
+	var capUrl = url.charAt(0).toUpperCase() + url.slice(1);
+	return capUrl;
+}
+
+/* Updates the title of the tab. */
+function updateTitle(index) {
+	var element = document.getElementById(tabArray[index]);
+    element.textContent = getTitle(index);
 }
