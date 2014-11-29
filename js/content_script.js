@@ -75,15 +75,13 @@ function createButton(tabNum, tabName) {
 			numTabs++;
 		}
 
-		var tabNum = numTabs;
+		tabNum = numTabs;
 	}
-
-	console.log("LOCATION IS " + location);
 
 	// Initialize tab button
 	var tab = document.createElement('tab');
 	tabLocation.parentElement.insertAdjacentElement('beforebegin', tab);
-	tab.innerHTML = '<a class="waves-effect waves-light btn" type="tabButton" id=' + tabNum + ' value= ' + tabName + '>' + tabName + '</a>';
+	tab.innerHTML = '<a class="waves-effect waves-light btn" type="tabButton" id=' + tabNum + '>' + tabName + '</a>';
 	tab.querySelector('a[type="tabButton"]').addEventListener('click', emailTabClickHandler, true);
 
 	// Initialize close button
@@ -98,10 +96,10 @@ function createButton(tabNum, tabName) {
 
 /* Runs when the new tab button is clicked. */
 function newTabClickHandler() {
+	createButton(null, getTitle(gmailUrl));
+
 	tabArray.push(numTabs);
 	tabUrlArray.push(gmailUrl);
-
-	createButton(null, getTitle(tabUrlArray.length-1));
 
 	saveUrls(); // Save URLs
 
@@ -178,7 +176,7 @@ function loadTabs() {
 
 				/* Rendering tabs in Gmail */
 				for (var i = 0; i < arrayLength; i++) {
-					createButton(tabArray[i], getTitle(i));
+					createButton(tabArray[i], getTitle(tabUrlArray[i]));
 				}
 			});
 
@@ -194,10 +192,10 @@ function loadTabs() {
 		else {
 			console.log("There is no memory in storage");
 
+			createButton(null, getTitle(gmailUrl));
+
 			tabArray.push(numTabs);
 			tabUrlArray.push(gmailUrl);
-
-			createButton(null, getTitle(tabUrlArray.length-1));
 
 			// Update tab colors
 			updateColor(null);
@@ -305,11 +303,11 @@ function removeTab(name) {
 			// Go to new url
 			goToUrl(prevTab, tempTabArray, tempUrlArray);
 		}
-	}
 
-	// Save changes
-	saveTabs();
-	saveUrls();
+		// Save changes
+		saveTabs();
+		saveUrls();
+	}
 }
 
 /* Updates the color of the current tab. */
@@ -326,8 +324,7 @@ function updateColor(prevTab) {
 }
 
 /* Gets the title of the tab. */
-function getTitle(index) {
-	var rawUrl = tabUrlArray[index];
+function getTitle(rawUrl) {
 	var loc = rawUrl.split("/")[6];
 	var url = loc.substring(1, loc.length);
 	var capUrl = url.charAt(0).toUpperCase() + url.slice(1);
@@ -337,5 +334,5 @@ function getTitle(index) {
 /* Updates the title of the tab. */
 function updateTitle(index) {
 	var element = document.getElementById(tabArray[index]);
-    element.textContent = getTitle(index);
+    element.textContent = getTitle(tabUrlArray[index]);
 }
