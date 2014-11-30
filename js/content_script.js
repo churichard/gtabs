@@ -3,6 +3,7 @@ var tabLocation; // Location of the tabs
 var numTabs; // Number of tabs
 var tabArray; // Array of tabs
 var tabUrlArray; // Array of tab URLs
+var tabTitleArray; // Array of tab titles
 var gmailUrl; // URL of Gmail
 var currentTab; // Current tab that the user is on
 var closeURL; // URL of close.png image
@@ -38,6 +39,9 @@ function init() {
 	/* Array of tab URLs */
 	tabUrlArray = [];
 
+	/* Array of tab titles */
+	tabTitleArray = [];
+
 	/* Initialize tabClicked */
 	tabClicked = false;
 
@@ -52,7 +56,10 @@ function init() {
 		/* Get saved urls */
 		loadUrls();
 
-		/* Get saved tabs, if there are any */
+		/* Get saved titles */
+		loadTitles();
+
+		/* Get saved tabs */
 		loadTabs();
 	});
 
@@ -67,9 +74,14 @@ function init() {
 				tabUrlArray[currentTabIndex] = request.url;
 
 				// Update the title of the tab
+				tabTitleArray[currentTabIndex] = getTitle(tabUrlArray[currentTabIndex]);
+
 				updateTitle(currentTabIndex);
 
 				console.log("Tab " + currentTab + " URL saved: " + request.url);
+
+				// Save the titles
+				saveTitles();
 			}
 			// Save the urls
 			saveUrls();
@@ -111,6 +123,7 @@ function newTabClickHandler() {
 
 	tabArray.push(numTabs);
 	tabUrlArray.push(gmailUrl);
+	tabTitleArray.push("Inbox");
 
 	saveUrls(); // Save URLs
 
@@ -122,6 +135,7 @@ function newTabClickHandler() {
 	goToUrl(prevTab, null, null); // Go to new URL
 
 	saveTabs(); // Save tabs
+	saveTitles(); // Save titles
 }
 
 /* Runs when an email tab is clicked. */
@@ -146,6 +160,9 @@ function closeTabClickHandler(e) {
 
 	if (id.length == 0)
 		id = e.target.id;
+
+	// One of the tabs has been clicked
+	tabClicked = true;
 
 	removeTab(id);
 }
@@ -192,7 +209,7 @@ function loadTabs() {
 
 				/* Rendering tabs in Gmail */
 				for (var i = 0; i < arrayLength; i++) {
-					createButton(tabArray[i], getTitle(tabUrlArray[i]));
+					createButton(tabArray[i], tabTitleArray[i]);
 				}
 			});
 
@@ -212,12 +229,14 @@ function loadTabs() {
 
 			tabArray.push(numTabs);
 			tabUrlArray.push(gmailUrl);
+			tabTitleArray.push("Inbox");
 
 			// Update tab colors
 			updateColor(null);
 
 			saveUrls(); // Save URLs
 			saveTabs(); // Save tabs
+			saveTitles(); // Save titles
 		}
 	});
 }
@@ -300,6 +319,7 @@ function removeTab(name) {
 		var tabIndex = tabArray.indexOf(num);
 		tabArray.splice(tabIndex, 1);
 		tabUrlArray.splice(tabIndex, 1);
+		tabTitleArray.splice(tabIndex, 1);
 
 		// Remove the tab from the screen
 		var tabElement = document.getElementById(num);
@@ -326,21 +346,38 @@ function removeTab(name) {
 	}
 }
 
-/* Updates the color of the current tab. */
-function updateColor(prevTab) {
-	if (prevTab != null) {
-		// Change the color of the previous tab back to gray
-		var tab = document.getElementById(prevTab);
-		tab.style.backgroundColor = "#E0E0E0";
-	}
+/* Saves tab titles to memory. */
+function saveTitles() {
+	var titleJson = JSON.stringify(tabTitleArray);
+	console.log("Titles: " + titleJson);
 
-	// Change the color of the current tab to blue
-	tab = document.getElementById(currentTab);
-	tab.style.backgroundColor = "#42A5F5";
+    // Save it using the Chrome extension storage API.
+    chrome.storage.local.set({'titles': titleJson}, function() {
+        // Notify that we saved.
+        var currentTabIndex = tabArray.indexOf(currentTab);
+        console.log('Tab URL settings saved: ' + tabTitleArray[currentTabIndex] + ' was saved.');
+    });
+}
+
+/* Loads tab titles from memory. */
+function loadTitles() {
+	chrome.storage.local.getBytesInUse('titles', function(bytesInUse) {
+		if (bytesInUse > 0) {
+			chrome.storage.local.get('titles', function(titles) {
+				// Converts JSON to array of strings
+				var tempTitleArray = JSON.parse(JSON.parse(JSON.stringify(titles)).titles);
+
+				for (var i = 0; i < tempTitleArray.length; i++) {
+					tabTitleArray[i] = tempTitleArray[i];
+				}
+				console.log("After loading titles: " + tabTitleArray.toString());
+			});
+		}
+	});
 }
 
 /* Gets the title of the tab. */
-function getTitle(rawUrl) {
+function getTitle(rawUrl) {	
 	var urlArray = rawUrl.split("/");
 	var title;
 	
@@ -388,5 +425,18 @@ function getTitle(rawUrl) {
 /* Updates the title of the tab. */
 function updateTitle(index) {
 	var element = document.getElementById(tabArray[index]);
-    element.textContent = getTitle(tabUrlArray[index]);
+    element.textContent = tabTitleArray[index];
+}
+
+/* Updates the color of the current tab. */
+function updateColor(prevTab) {
+	if (prevTab != null) {
+		// Change the color of the previous tab back to gray
+		var tab = document.getElementById(prevTab);
+		tab.style.backgroundColor = "#E0E0E0";
+	}
+
+	// Change the color of the current tab to blue
+	tab = document.getElementById(currentTab);
+	tab.style.backgroundColor = "#42A5F5";
 }
