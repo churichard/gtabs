@@ -7,6 +7,7 @@ var gmailUrl; // URL of Gmail
 var currentTab; // Current tab that the user is on
 var closeURL; // URL of close.png image
 var location; // Location of the user in Gmail
+var tabClicked; // If a tab is clicked or not
 
 /* Call init function */
 init();
@@ -37,6 +38,9 @@ function init() {
 	/* Array of tab URLs */
 	tabUrlArray = [];
 
+	/* Initialize tabClicked */
+	tabClicked = false;
+
 	/* Save Gmail's URL */
 	chrome.runtime.sendMessage({tag: "initialRun"}, function(response) {
 		console.log("Initial run happened!");
@@ -55,15 +59,22 @@ function init() {
 	/* Event listener for page changes */
 	chrome.runtime.onMessage.addListener(
 		function(request, sender, sendResponse) {
-			// Update the tab url
-			var currentTabIndex = tabArray.indexOf(currentTab);
-			tabUrlArray[currentTabIndex] = request.url;
+			// If none of the tabs were clicked
+			if (!tabClicked) {
+				// Get the current tab index
+				var currentTabIndex = tabArray.indexOf(currentTab);
+				// Update the tab url
+				tabUrlArray[currentTabIndex] = request.url;
+
+				// Update the title of the tab
+				updateTitle(currentTabIndex);
+
+				console.log("Tab " + currentTab + " URL saved: " + request.url);
+			}
 			// Save the urls
 			saveUrls();
-			// Update the title of the tab
-			updateTitle(currentTabIndex);
 
-			console.log("Tab " + currentTab + " URL saved: " + request.url);
+			tabClicked = false; // Reset tabClicked
 		});
 }
 
@@ -121,7 +132,10 @@ function emailTabClickHandler(e) {
 	// Change tab colors
 	updateColor(prevTab);
 
-	goToUrl(prevTab, null, null); // Go to new URL
+	// One of the tabs has been clicked
+	tabClicked = true;
+
+	goToUrl(prevTab, null, null); // Go to new URLs
 
 	saveTabs(); // Save tabs
 }
@@ -173,6 +187,8 @@ function loadTabs() {
 				for (var i = 0; i < arrayLength; i++) {
 					tabArray[i] = parseInt(tempTabArray[i]);
 				}
+
+				console.log("Tab url array: " + tabUrlArray.toString());
 
 				/* Rendering tabs in Gmail */
 				for (var i = 0; i < arrayLength; i++) {
@@ -325,10 +341,24 @@ function updateColor(prevTab) {
 
 /* Gets the title of the tab. */
 function getTitle(rawUrl) {
-	var loc = rawUrl.split("/")[6];
-	var url = loc.substring(1, loc.length);
-	var capUrl = url.charAt(0).toUpperCase() + url.slice(1);
-	return capUrl;
+	var urlArray = rawUrl.split("/");
+	var title;
+
+	if (urlArray.length == 7) {
+		console.log("Urlarray is equal to 7");
+		var loc = urlArray[6];
+		loc = loc.substring(1, loc.length);
+		title = loc.charAt(0).toUpperCase() + loc.slice(1);
+	}
+	else if (urlArray.length > 7) {
+		console.log("Urlarray is greater than 7");
+		console.log("urlarray: " + urlArray.toString());
+		title = document.getElementsByClassName("hP")[0].textContent;
+	}
+
+	console.log("TITLE is : " + title);
+	
+	return title;
 }
 
 /* Updates the title of the tab. */

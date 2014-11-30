@@ -24,14 +24,16 @@ chrome.runtime.onMessage.addListener(
 	});
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-		chrome.tabs.sendMessage(tabs[0].id, {url: tabs[0].url}, function(response) {
-			// Sending tab url to content_script
+	if (changeInfo.status == "complete") {
+		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+			chrome.tabs.sendMessage(tabs[0].id, {url: tabs[0].url}, function(response) {
+				// Sending tab url to content_script
+			});
 		});
-	});
+	}
 
 	//Clears the storage
 	if (changeInfo.url == undefined){
-		chrome.storage.sync.clear();
+		chrome.storage.local.clear();
 	}
 });
