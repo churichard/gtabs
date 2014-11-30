@@ -343,20 +343,44 @@ function updateColor(prevTab) {
 function getTitle(rawUrl) {
 	var urlArray = rawUrl.split("/");
 	var title;
-
+	
 	if (urlArray.length == 7) {
-		console.log("Urlarray is equal to 7");
+		console.log("urlArray length is equal to 7");
+
 		var loc = urlArray[6];
-		loc = loc.substring(1, loc.length);
-		title = loc.charAt(0).toUpperCase() + loc.slice(1);
+		if (loc == "#") {
+			title = "Categories";
+		}
+		else if (loc == "#sent") {
+			title = "Sent Mail";
+		}
+		else if (loc == "#all") {
+			title = "All Mail";
+		}
+		else if (loc == "#imp") {
+			title = "Important";
+		}
+		else {
+			loc = loc.substring(1, loc.length);
+			title = loc.charAt(0).toUpperCase() + loc.slice(1);
+			if (title.length > 15)
+				title = title.substring(0, 15) + "...";
+		}
 	}
 	else if (urlArray.length > 7) {
-		console.log("Urlarray is greater than 7");
-		console.log("urlarray: " + urlArray.toString());
-		title = document.getElementsByClassName("hP")[0].textContent;
-	}
+		console.log("urlArray length is greater than 7");
 
-	console.log("TITLE is : " + title);
+		var category = urlArray[6];
+		if (category == "#label" || category == "#category") {
+			title = urlArray[7];
+			title = title.charAt(0).toUpperCase() + title.slice(1);
+		}
+		else {
+			title = document.getElementsByClassName("hP")[0].textContent;
+			if (title.length > 15)
+				title = title.substring(0, 15) + "...";
+		}
+	}
 	
 	return title;
 }
