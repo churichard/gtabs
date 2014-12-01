@@ -66,6 +66,27 @@ function init() {
 	/* Event listener for page changes */
 	chrome.runtime.onMessage.addListener(
 		function(request, sender, sendResponse) {
+			//Check to see if the user is composing a message
+			var url = request.url;
+			var cIndex = url.indexOf("?compose");
+			if (cIndex > -1) {
+				for (var i = 0; i < tabUrlArray.length; i++) {
+					var tabUrl = tabUrlArray[i];
+					if (tabUrl.indexOf("?compose") === -1) {
+						tabUrlArray[i] = tabUrl + url.substring(cIndex, url.length);
+					}
+				}
+			}
+			else {
+				for (var i = 0; i < tabUrlArray.length; i++) {
+					var tabUrl = tabUrlArray[i];
+					var index = tabUrl.indexOf("?compose");
+					if (index > -1) {
+						tabUrlArray[i] = tabUrl.substring(0, index);
+					}
+				}
+			}
+
 			// If none of the tabs were clicked
 			if (!tabClicked) {
 				// Get the current tab index
@@ -78,11 +99,12 @@ function init() {
 
 				updateTitle(currentTabIndex);
 
-				console.log("Tab " + currentTab + " URL saved: " + request.url);
-
 				// Save the titles
 				saveTitles();
+
+				console.log("Tab " + currentTab + " URL saved: " + request.url);
 			}
+
 			// Save the urls
 			saveUrls();
 
@@ -92,9 +114,9 @@ function init() {
 
 /* Creates a tab button. */
 function createButton(tabNum, tabName) {
-	if (tabNum == null) {
+	if (tabNum === null) {
 		// Look for the next available tab number
-		while (tabArray.indexOf(numTabs) != -1) {
+		while (tabArray.indexOf(numTabs) !== -1) {
 			numTabs++;
 		}
 
@@ -147,7 +169,8 @@ function emailTabClickHandler(e) {
 	updateColor(prevTab);
 
 	// One of the tabs has been clicked
-	tabClicked = true;
+	if (prevTab !== currentTab)
+		tabClicked = true;
 
 	goToUrl(prevTab, null, null); // Go to new URLs
 
@@ -158,7 +181,7 @@ function emailTabClickHandler(e) {
 function closeTabClickHandler(e) {
 	var id = e.target.parentNode.id;
 
-	if (id.length == 0)
+	if (id.length === 0)
 		id = e.target.id;
 
 	// One of the tabs has been clicked
@@ -257,7 +280,7 @@ function saveUrls() {
 /* Gets the URL associated with the tab from memory and goes to it. */
 function goToUrl(prevTab, tempTabArray, tempUrlArray) {
 	chrome.storage.local.get('urls', function(urls) {
-		if (tempTabArray == null && tempUrlArray == null) {
+		if (tempTabArray === null && tempUrlArray === null) {
 			// Converts JSON to array of strings
 			tempUrlArray = JSON.parse(JSON.parse(JSON.stringify(urls)).urls);
 			tempTabArray = tabArray;
@@ -270,7 +293,7 @@ function goToUrl(prevTab, tempTabArray, tempUrlArray) {
 		// Update URL
 		var prevTabIndex = tempTabArray.indexOf(prevTab);
 
-		if (url != tempUrlArray[prevTabIndex]) {
+		if (url !== tempUrlArray[prevTabIndex]) {
 			chrome.runtime.sendMessage({tag: url}, function(response) {
 				console.log(response.message);
 			});
@@ -301,7 +324,7 @@ function loadUrls() {
 /* Removes a tab from memory. */
 function removeTab(name) {
 	// Handles if there are no tabs left
-	if (tabArray.length == 1) {
+	if (tabArray.length === 1) {
 		// Clears the storage
 		chrome.storage.local.clear();
 
@@ -328,7 +351,7 @@ function removeTab(name) {
 		closeElement.parentNode.parentNode.removeChild(closeElement.parentNode);
 
 		// Handles if you remove the current tab
-		if (currentTab == num) {
+		if (currentTab === num) {
 			var prevTab = currentTab;
 			// Update the current tab
 			currentTab = tabArray[0];
@@ -381,24 +404,28 @@ function getTitle(rawUrl) {
 	var urlArray = rawUrl.split("/");
 	var title;
 	
-	if (urlArray.length == 7) {
+	if (urlArray.length === 7) {
 		console.log("urlArray length is equal to 7");
 
 		var loc = urlArray[6];
-		if (loc == "#") {
+		if (loc === "#") {
 			title = "Categories";
 		}
-		else if (loc == "#sent") {
+		else if (loc === "#sent") {
 			title = "Sent Mail";
 		}
-		else if (loc == "#all") {
+		else if (loc === "#all") {
 			title = "All Mail";
 		}
-		else if (loc == "#imp") {
+		else if (loc === "#imp") {
 			title = "Important";
 		}
 		else {
-			loc = loc.substring(1, loc.length);
+			var endIndex = loc.length;
+			var qIndex = loc.indexOf("?");
+			if (qIndex > -1)
+				endIndex = qIndex;
+			loc = loc.substring(1, endIndex);
 			title = loc.charAt(0).toUpperCase() + loc.slice(1);
 			if (title.length > 15)
 				title = title.substring(0, 15) + "...";
@@ -408,7 +435,7 @@ function getTitle(rawUrl) {
 		console.log("urlArray length is greater than 7");
 
 		var category = urlArray[6];
-		if (category == "#label" || category == "#category") {
+		if (category === "#label" || category === "#category") {
 			title = urlArray[7];
 			title = title.charAt(0).toUpperCase() + title.slice(1);
 		}
@@ -425,12 +452,12 @@ function getTitle(rawUrl) {
 /* Updates the title of the tab. */
 function updateTitle(index) {
 	var element = document.getElementById(tabArray[index]);
-    element.textContent = tabTitleArray[index];
+	element.textContent = tabTitleArray[index];
 }
 
 /* Updates the color of the current tab. */
 function updateColor(prevTab) {
-	if (prevTab != null) {
+	if (prevTab !== null) {
 		// Change the color of the previous tab back to gray
 		var tab = document.getElementById(prevTab);
 		tab.style.backgroundColor = "#E0E0E0";
