@@ -435,7 +435,7 @@ function getTitle(rawUrl) {
 		console.log("urlArray length is greater than 7");
 
 		var category = urlArray[6];
-		if (category === "#label" || category === "#category") {
+		if (category === "#label" || category === "#category" || category === "#search") {
 			title = urlArray[7];
 			title = title.charAt(0).toUpperCase() + title.slice(1);
 		}
