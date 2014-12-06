@@ -91,6 +91,19 @@ function init() {
 			if (!tabClicked) {
 				// Get the current tab index
 				var currentTabIndex = tabArray.indexOf(currentTab);
+
+				// If an email is clicked, open it in a new tab
+				// var currentUrlArray = tabUrlArray[currentTabIndex].split("/");
+				// if (currentUrlArray.length === 7) {
+				// 	var urlArray = request.url.split("/");
+				// 	if (urlArray.length > 7) {
+				// 		// Create a new tab
+				// 		newTabClickHandler();
+				// 	}
+				// }
+
+				currentTabIndex = tabArray.indexOf(currentTab);
+				
 				// Update the tab url
 				tabUrlArray[currentTabIndex] = request.url;
 
@@ -168,8 +181,12 @@ function emailTabClickHandler(e) {
 	// Change tab colors
 	updateColor(prevTab);
 
+	// Get the previous and current tab indices
+	var prevTabIndex = tabArray.indexOf(prevTab);
+	var currentTabIndex = tabArray.indexOf(currentTab);
+
 	// One of the tabs has been clicked
-	if (prevTab !== currentTab)
+	if (prevTab !== currentTab && tabUrlArray[currentTabIndex] !== tabUrlArray[prevTabIndex])
 		tabClicked = true;
 
 	goToUrl(prevTab, null, null); // Go to new URLs
@@ -185,7 +202,10 @@ function closeTabClickHandler(e) {
 		id = e.target.id;
 
 	// One of the tabs has been clicked
-	tabClicked = true;
+	if (parseInt(id.toString().charAt(5)) === currentTab) {
+		tabClicked = true;
+		console.log("Tab clicked is true");
+	}
 
 	removeTab(id);
 }
@@ -407,7 +427,8 @@ function getTitle(rawUrl) {
 	if (urlArray.length === 7) {
 		console.log("urlArray length is equal to 7");
 
-		var loc = urlArray[6];
+		var loc = urlArray[6].split("?")[0];
+
 		if (loc === "#") {
 			title = "Categories";
 		}
@@ -444,6 +465,9 @@ function getTitle(rawUrl) {
 			if (title.length > 15)
 				title = title.substring(0, 15) + "...";
 		}
+	}
+	else {
+		console.log("Something's wrong; urlArray length is less than 7");
 	}
 	
 	return title;
