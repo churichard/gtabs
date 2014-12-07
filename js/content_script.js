@@ -9,6 +9,7 @@ var currentTab; // Current tab that the user is on
 var closeURL; // URL of close.png image
 var location; // Location of the user in Gmail
 var tabClicked; // If a tab is clicked or not
+var emailClicked; // If an email is clicked or not
 
 /* Call init function */
 init();
@@ -45,13 +46,15 @@ function init() {
 	/* Initialize tabClicked */
 	tabClicked = false;
 
+	/* Initialize emailClicked */
+	emailClicked = false;
+
 	/* Save Gmail's URL */
 	chrome.runtime.sendMessage({tag: "initialRun"}, function(response) {
-		console.log("Initial run happened!");
+		console.log("Initial run");
 
 		/* Initialize gmailUrl */
 		gmailUrl = response.url;
-		console.log("gmailURL is " + gmailUrl.toString());
 
 		/* Get saved urls */
 		loadUrls();
@@ -66,6 +69,11 @@ function init() {
 	/* Event listener for page changes */
 	chrome.runtime.onMessage.addListener(
 		function(request, sender, sendResponse) {
+			if (!tabClicked && emailClicked === true) {
+				emailClicked = false;
+				return;
+			}
+
 			//Check to see if the user is composing a message
 			var url = request.url;
 			var cIndex = url.indexOf("?compose");
@@ -93,29 +101,42 @@ function init() {
 				var currentTabIndex = tabArray.indexOf(currentTab);
 
 				// If an email is clicked, open it in a new tab
-				// var currentUrlArray = tabUrlArray[currentTabIndex].split("/");
-				// if (currentUrlArray.length === 7) {
-				// 	var urlArray = request.url.split("/");
-				// 	if (urlArray.length > 7) {
-				// 		// Create a new tab
-				// 		newTabClickHandler();
-				// 	}
-				// }
+				var urlArray = request.url.split("/");
+				if (urlArray.length >= 8) {
+					// Create a new tab
+					createButton(null, getTitle(gmailUrl));
 
-				currentTabIndex = tabArray.indexOf(currentTab);
-				
-				// Update the tab url
-				tabUrlArray[currentTabIndex] = request.url;
+					tabArray.push(numTabs);
+					tabUrlArray.push(request.url);
+					tabTitleArray.push(getTitle(tabUrlArray[currentTabIndex]));
 
-				// Update the title of the tab
-				tabTitleArray[currentTabIndex] = getTitle(tabUrlArray[currentTabIndex]);
+					// Change tab colors
+					var prevTab = currentTab;
+					currentTab = numTabs;
+					updateColor(prevTab);
 
-				updateTitle(currentTabIndex);
+					saveTabs(); // Save tabs
+				}
 
-				// Save the titles
-				saveTitles();
+				if (emailClicked === false) {
+					//emailClicked = true;
+					currentTabIndex = tabArray.indexOf(currentTab);
 
-				console.log("Tab " + currentTab + " URL saved: " + request.url);
+					// Update the tab url
+					tabUrlArray[currentTabIndex] = request.url;
+
+					// Update the title of the tab
+					tabTitleArray[currentTabIndex] = getTitle(tabUrlArray[currentTabIndex]);
+
+					updateTitle(currentTabIndex);
+
+					// Save the titles
+					saveTitles();
+
+					console.log("Tab " + currentTab + " URL saved: " + request.url);
+				}
+
+				emailClicked = false;
 			}
 
 			// Save the urls
@@ -204,7 +225,6 @@ function closeTabClickHandler(e) {
 	// One of the tabs has been clicked
 	if (parseInt(id.toString().charAt(5)) === currentTab) {
 		tabClicked = true;
-		console.log("Tab clicked is true");
 	}
 
 	removeTab(id);
@@ -212,7 +232,7 @@ function closeTabClickHandler(e) {
 
 /* Stores the tabs that the user has open. */
 function saveTabs() {
-	// Save it using the Chrome extension storage API.
+	// Save the current tab
 	chrome.storage.local.set({'currentTab': currentTab}, function() {
         // Notify that we saved.
         console.log('Current tab settings saved: ' + currentTab + ' was saved.');
@@ -221,10 +241,10 @@ function saveTabs() {
 	var tabsJson = JSON.stringify(tabArray);
 	console.log("Tabs: " + tabsJson);
 
-    // Save it using the Chrome extension storage API.
+    // Save the array of tabs
     chrome.storage.local.set({'tabs': tabsJson}, function() {
         // Notify that we saved.
-        console.log('Tab settings saved: ' + currentTab + ' was saved.');
+        console.log('Tab settings saved.');
     });
 }
 
@@ -386,6 +406,7 @@ function removeTab(name) {
 		// Save changes
 		saveTabs();
 		saveUrls();
+		saveTitles();
 	}
 }
 
@@ -398,7 +419,7 @@ function saveTitles() {
     chrome.storage.local.set({'titles': titleJson}, function() {
         // Notify that we saved.
         var currentTabIndex = tabArray.indexOf(currentTab);
-        console.log('Tab URL settings saved: ' + tabTitleArray[currentTabIndex] + ' was saved.');
+        console.log('Tab title settings saved: ' + tabTitleArray[currentTabIndex] + ' was saved.');
     });
 }
 
@@ -421,12 +442,12 @@ function loadTitles() {
 
 /* Gets the title of the tab. */
 function getTitle(rawUrl) {	
-	var urlArray = rawUrl.split("/");
+	//var urlArray = rawUrl.split("/");
 	var title;
-	
-	if (urlArray.length === 7) {
-		console.log("urlArray length is equal to 7");
 
+	title = document.title.split(" - ")[0];
+	/*
+	if (urlArray.length === 7) {
 		var loc = urlArray[6].split("?")[0];
 
 		if (loc === "#") {
@@ -442,33 +463,32 @@ function getTitle(rawUrl) {
 			title = "Important";
 		}
 		else {
-			var endIndex = loc.length;
-			var qIndex = loc.indexOf("?");
-			if (qIndex > -1)
-				endIndex = qIndex;
-			loc = loc.substring(1, endIndex);
+			loc = loc.substring(1, loc.length);
 			title = loc.charAt(0).toUpperCase() + loc.slice(1);
-			if (title.length > 15)
-				title = title.substring(0, 15) + "...";
 		}
 	}
 	else if (urlArray.length > 7) {
-		console.log("urlArray length is greater than 7");
-
 		var category = urlArray[6];
+
 		if (category === "#label" || category === "#category" || category === "#search") {
-			title = urlArray[7];
-			title = title.charAt(0).toUpperCase() + title.slice(1);
+			if (urlArray.length === 9) {
+				title = document.getElementsByClassName("hP")[0].textContent;
+			}
+			else {
+				title = urlArray[7].split("?")[0];
+				title = title.charAt(0).toUpperCase() + title.slice(1);
+			}
 		}
 		else {
 			title = document.getElementsByClassName("hP")[0].textContent;
-			if (title.length > 15)
-				title = title.substring(0, 15) + "...";
 		}
 	}
 	else {
 		console.log("Something's wrong; urlArray length is less than 7");
-	}
+	}*/
+
+	if (title.length > 15)
+		title = title.substring(0, 15) + "...";
 	
 	return title;
 }

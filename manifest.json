@@ -9,7 +9,7 @@
   {
     "matches": ["https://mail.google.com/mail/*"],
     "css": ["css/background.css", "materialize_v0.82/css/materialize.css"],
-    "js": ["js/content_script.js", "js/jquery-2.1.1.min.js", "materialize_v0.82/js/materialize.min.js"]
+    "js": ["js/content_script.js"]
   }
   ],
 
