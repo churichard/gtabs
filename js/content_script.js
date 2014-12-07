@@ -135,13 +135,12 @@ function init() {
 
 					console.log("Tab " + currentTab + " URL saved: " + request.url);
 				}
-
-				emailClicked = false;
 			}
 
 			// Save the urls
 			saveUrls();
 
+			emailClicked = false; // Reset emailClicked
 			tabClicked = false; // Reset tabClicked
 		});
 }
@@ -442,11 +441,9 @@ function loadTitles() {
 
 /* Gets the title of the tab. */
 function getTitle(rawUrl) {	
-	//var urlArray = rawUrl.split("/");
+	var urlArray = rawUrl.split("/");
 	var title;
-
-	title = document.title.split(" - ")[0];
-	/*
+	
 	if (urlArray.length === 7) {
 		var loc = urlArray[6].split("?")[0];
 
@@ -485,7 +482,7 @@ function getTitle(rawUrl) {
 	}
 	else {
 		console.log("Something's wrong; urlArray length is less than 7");
-	}*/
+	}
 
 	if (title.length > 15)
 		title = title.substring(0, 15) + "...";
