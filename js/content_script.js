@@ -103,19 +103,22 @@ function init() {
 				// If an email is clicked, open it in a new tab
 				var urlArray = request.url.split("/");
 				if (urlArray.length >= 8) {
-					// Create a new tab
-					createButton(null, getTitle(gmailUrl));
+					if (request.url.indexOf("?") === -1 && tabUrlArray[currentTabIndex].indexOf("?") === -1
+						&& document.getElementsByClassName("hP").length > 0) {
+						// Create a new tab
+						createButton(null, getTitle(gmailUrl));
 
-					tabArray.push(numTabs);
-					tabUrlArray.push(request.url);
-					tabTitleArray.push(getTitle(tabUrlArray[currentTabIndex]));
+						tabArray.push(numTabs);
+						tabUrlArray.push(request.url);
+						tabTitleArray.push(getTitle(tabUrlArray[currentTabIndex]));
 
-					// Change tab colors
-					var prevTab = currentTab;
-					currentTab = numTabs;
-					updateColor(prevTab);
+						// Change tab colors
+						var prevTab = currentTab;
+						currentTab = numTabs;
+						updateColor(prevTab);
 
-					saveTabs(); // Save tabs
+						saveTabs(); // Save tabs
+					}
 				}
 
 				if (emailClicked === false) {
@@ -222,9 +225,10 @@ function closeTabClickHandler(e) {
 		id = e.target.id;
 
 	// One of the tabs has been clicked
-	if (parseInt(id.toString().charAt(5)) === currentTab) {
+	var tab = parseInt(id.toString().charAt(5));
+	var tabIndex = tabArray.indexOf(tab);
+	if (tab === currentTab && tabUrlArray[tabIndex] !== tabUrlArray[0])
 		tabClicked = true;
-	}
 
 	removeTab(id);
 }
@@ -467,7 +471,7 @@ function getTitle(rawUrl) {
 	else if (urlArray.length > 7) {
 		var category = urlArray[6];
 
-		if (category === "#label" || category === "#category" || category === "#search") {
+		if (category === "#label" || category === "#category" || category === "#search" || category === "#settings") {
 			if (urlArray.length === 9) {
 				title = document.getElementsByClassName("hP")[0].textContent;
 			}
@@ -475,6 +479,9 @@ function getTitle(rawUrl) {
 				title = urlArray[7].split("?")[0];
 				title = title.charAt(0).toUpperCase() + title.slice(1);
 			}
+		}
+		else if (category === "#contacts") {
+			title = "Contacts";
 		}
 		else {
 			title = document.getElementsByClassName("hP")[0].textContent;
