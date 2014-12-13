@@ -24,24 +24,18 @@ function init() {
 	tab.innerHTML = '<a class="waves-effect waves-light new-tab-btn btn" type="tabButton" id=' + 0 + '>+</a>';
 	tab.querySelector('a[type="tabButton"]').addEventListener('click', newTabClickHandler, true);
 
-	/* Number of tabs */
+	/* Number of tabs open */
 	numTabs = 1;
-
 	/* Initializes closeURL */
 	closeURL = chrome.extension.getURL("img/close.png");
-
 	/* Current tab */
 	currentTab = 1;
-
 	/* Array of tabs open */
 	tabArray = [];
-
 	/* Array of tab URLs */
 	tabUrlArray = [];
-
 	/* Array of tab titles */
 	tabTitleArray = [];
-
 	/* Initialize tabClicked */
 	tabClicked = false;
 
@@ -54,10 +48,8 @@ function init() {
 
 		/* Get saved urls */
 		loadUrls();
-
 		/* Get saved titles */
 		loadTitles();
-
 		/* Get saved tabs */
 		loadTabs();
 	});
@@ -65,19 +57,27 @@ function init() {
 	/* Event listener for page changes */
 	chrome.runtime.onMessage.addListener(
 		function(request, sender, sendResponse) {
-			//Check to see if the user is composing a message
+			// Check to see if the user is composing a message
 			var url = request.url;
+			var currentTabIndex = tabArray.indexOf(currentTab);
 			var cIndex = url.indexOf("?compose");
+
+			// If the user is composing a message
 			if (cIndex > -1) {
+				// Iterate through all the urls
 				for (var i = 0; i < tabUrlArray.length; i++) {
+					// Add the compose message window to the urls that don't have it
 					var tabUrl = tabUrlArray[i];
 					if (tabUrl.indexOf("?compose") === -1) {
 						tabUrlArray[i] = tabUrl + url.substring(cIndex, url.length);
 					}
 				}
 			}
+			// If the user is not composing a message
 			else {
+				// Iterate through all the urls
 				for (var i = 0; i < tabUrlArray.length; i++) {
+					// Remove the compose message window from the urls that have it
 					var tabUrl = tabUrlArray[i];
 					var index = tabUrl.indexOf("?compose");
 					if (index > -1) {
@@ -88,16 +88,12 @@ function init() {
 
 			// If none of the tabs were clicked
 			if (!tabClicked) {
-				// Get the current tab index
-				var currentTabIndex = tabArray.indexOf(currentTab);
-
 				// If an email is clicked, open it in a new tab
 				var urlArray = url.split("/");
 				if (urlArray.length >= 8) {
-					console.log("RAWRRAWRRAWR1:" + url.indexOf("?") + " " + url.indexOf(tabUrlArray[currentTabIndex]));
-					console.log("RAWRRAWRRAWR2:" + tabUrlArray[currentTabIndex].indexOf("?") + " " + tabUrlArray[currentTabIndex].indexOf(url));
+					// Checking to see that the user is not clicking an attachment
 					if ((url.indexOf("&") !== -1) || (tabUrlArray[currentTabIndex].indexOf("&") !== -1)
-						|| (url.indexOf("?") !== -1 && url.indexOf(tabUrlArray[currentTabIndex]) !== -1)
+						|| (url.indexOf("?") !== -1 && url.indexOf(tabUrlArray[currentTabIndex].split("?")[0]) !== -1)
 						|| (tabUrlArray[currentTabIndex].indexOf("?") === -1 && tabUrlArray[currentTabIndex].indexOf(url) !== -1)
 						|| (tabUrlArray[currentTabIndex].indexOf("?") !== -1 && tabUrlArray[currentTabIndex].indexOf(url) !== -1)) {
 					}
@@ -125,7 +121,6 @@ function init() {
 
 				// Update the title of the tab
 				tabTitleArray[currentTabIndex] = getTitle(tabUrlArray[currentTabIndex]);
-
 				updateTitle(currentTabIndex);
 
 				// Save the titles
@@ -137,7 +132,6 @@ function init() {
 			// Save the urls
 			saveUrls();
 
-			emailClicked = false; // Reset emailClicked
 			tabClicked = false; // Reset tabClicked
 		});
 }
