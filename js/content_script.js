@@ -41,7 +41,7 @@ function init() {
 
 	/* Save Gmail's URL */
 	chrome.runtime.sendMessage({tag: "initialRun"}, function(response) {
-		console.log("Initial run");
+		//console.log("Initial run");
 
 		/* Initialize gmailUrl */
 		gmailUrl = response.url;
@@ -126,7 +126,7 @@ function init() {
 				// Save the titles
 				saveTitles();
 
-				console.log("Tab " + currentTab + " URL saved: " + url);
+				//console.log("Tab " + currentTab + " URL saved: " + url);
 			}
 
 			// Save the urls
@@ -231,16 +231,16 @@ function saveTabs() {
 	// Save the current tab
 	chrome.storage.local.set({'currentTab': currentTab}, function() {
         // Notify that we saved.
-        console.log('Current tab settings saved: ' + currentTab + ' was saved.');
+        //console.log('Current tab settings saved: ' + currentTab + ' was saved.');
     });
 
 	var tabsJson = JSON.stringify(tabArray);
-	console.log("Tabs: " + tabsJson);
+	//console.log("Tabs: " + tabsJson);
 
     // Save the array of tabs
     chrome.storage.local.set({'tabs': tabsJson}, function() {
         // Notify that we saved.
-        console.log('Tab settings saved.');
+        //console.log('Tab settings saved.');
     });
 }
 
@@ -248,7 +248,7 @@ function saveTabs() {
 function loadTabs() {
 	chrome.storage.local.getBytesInUse('tabs', function(bytesInUse) {
 		if (bytesInUse > 0) {
-			console.log("There is memory in storage");
+			//console.log("There is memory in storage");
 
 			/* Getting tabs from memory and storing them into tabArray */
 			chrome.storage.local.get('tabs', function(tabs) {
@@ -256,7 +256,7 @@ function loadTabs() {
 				var tempTabArray = JSON.parse(JSON.parse(JSON.stringify(tabs)).tabs);
 
 				// Notify that the tabs have been received
-				console.log('Tabs have been received: ' + tempTabArray.toString());
+				//console.log('Tabs have been received: ' + tempTabArray.toString());
 
 				var arrayLength = tempTabArray.length;
 
@@ -264,7 +264,7 @@ function loadTabs() {
 					tabArray[i] = parseInt(tempTabArray[i]);
 				}
 
-				console.log("Tab url array: " + tabUrlArray.toString());
+				//console.log("Tab url array: " + tabUrlArray.toString());
 
 				/* Rendering tabs in Gmail */
 				for (var i = 0; i < arrayLength; i++) {
@@ -275,14 +275,14 @@ function loadTabs() {
 			/* Getting the current tab from memory */
 			chrome.storage.local.get('currentTab', function(storedCurrentTab) {
 				currentTab = parseInt(JSON.parse(JSON.parse(JSON.stringify(storedCurrentTab)).currentTab));
-				console.log("Current tab has been retrieved: " + currentTab);
+				//console.log("Current tab has been retrieved: " + currentTab);
 
 				// Update tab colors
 				updateColor(null);
 			});
 		}
 		else {
-			console.log("There is no memory in storage");
+			//console.log("There is no memory in storage");
 
 			createButton(null, getTitle(gmailUrl));
 
@@ -303,13 +303,13 @@ function loadTabs() {
 /* Saves the URLs associated with each tab into memory. */
 function saveUrls() {
 	var urlJson = JSON.stringify(tabUrlArray);
-	console.log("URLS: " + urlJson);
+	//console.log("URLS: " + urlJson);
 
     // Save it using the Chrome extension storage API.
     chrome.storage.local.set({'urls': urlJson}, function() {
         // Notify that we saved.
         var currentTabIndex = tabArray.indexOf(currentTab);
-        console.log('Tab URL settings saved: ' + tabUrlArray[currentTabIndex] + ' was saved.');
+        //console.log('Tab URL settings saved: ' + tabUrlArray[currentTabIndex] + ' was saved.');
     });
 }
 
@@ -331,11 +331,11 @@ function goToUrl(prevTab, tempTabArray, tempUrlArray) {
 
 		if (url !== tempUrlArray[prevTabIndex]) {
 			chrome.runtime.sendMessage({tag: url}, function(response) {
-				console.log(response.message);
+				//console.log(response.message);
 			});
 		}
 		else {
-			console.log("Same URL: " + url)
+			//console.log("Same URL: " + url)
 		}
 	});
 }
@@ -351,7 +351,7 @@ function loadUrls() {
 				for (var i = 0; i < tempUrlArray.length; i++) {
 					tabUrlArray[i] = tempUrlArray[i];
 				}
-				console.log("After loading urls: " + tabUrlArray.toString());
+				//console.log("After loading urls: " + tabUrlArray.toString());
 			});
 		}
 	});
@@ -412,13 +412,13 @@ function removeTab(name) {
 /* Saves tab titles to memory. */
 function saveTitles() {
 	var titleJson = JSON.stringify(tabTitleArray);
-	console.log("Titles: " + titleJson);
+	//console.log("Titles: " + titleJson);
 
     // Save it using the Chrome extension storage API.
     chrome.storage.local.set({'titles': titleJson}, function() {
         // Notify that we saved.
         var currentTabIndex = tabArray.indexOf(currentTab);
-        console.log('Tab title settings saved: ' + tabTitleArray[currentTabIndex] + ' was saved.');
+        //console.log('Tab title settings saved: ' + tabTitleArray[currentTabIndex] + ' was saved.');
     });
 }
 
@@ -433,7 +433,7 @@ function loadTitles() {
 				for (var i = 0; i < tempTitleArray.length; i++) {
 					tabTitleArray[i] = tempTitleArray[i];
 				}
-				console.log("After loading titles: " + tabTitleArray.toString());
+				//console.log("After loading titles: " + tabTitleArray.toString());
 			});
 		}
 	});
@@ -484,7 +484,7 @@ function getTitle(rawUrl) {
 		}
 	}
 	else {
-		console.log("Something's wrong; urlArray length is less than 7");
+		//console.log("Something's wrong; urlArray length is less than 7");
 	}
 
 	if (title.length > 15)
