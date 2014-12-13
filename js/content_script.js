@@ -9,7 +9,6 @@ var currentTab; // Current tab that the user is on
 var closeURL; // URL of close.png image
 var location; // Location of the user in Gmail
 var tabClicked; // If a tab is clicked or not
-var emailClicked; // If an email is clicked or not
 
 /* Call init function */
 init();
@@ -46,9 +45,6 @@ function init() {
 	/* Initialize tabClicked */
 	tabClicked = false;
 
-	/* Initialize emailClicked */
-	emailClicked = false;
-
 	/* Save Gmail's URL */
 	chrome.runtime.sendMessage({tag: "initialRun"}, function(response) {
 		console.log("Initial run");
@@ -69,11 +65,6 @@ function init() {
 	/* Event listener for page changes */
 	chrome.runtime.onMessage.addListener(
 		function(request, sender, sendResponse) {
-			if (!tabClicked && emailClicked === true) {
-				emailClicked = false;
-				return;
-			}
-
 			//Check to see if the user is composing a message
 			var url = request.url;
 			var cIndex = url.indexOf("?compose");
@@ -101,10 +92,16 @@ function init() {
 				var currentTabIndex = tabArray.indexOf(currentTab);
 
 				// If an email is clicked, open it in a new tab
-				var urlArray = request.url.split("/");
+				var urlArray = url.split("/");
 				if (urlArray.length >= 8) {
-					if (request.url.indexOf("?") === -1 && tabUrlArray[currentTabIndex].indexOf("?") === -1
-						&& document.getElementsByClassName("hP").length > 0) {
+					console.log("RAWRRAWRRAWR1:" + url.indexOf("?") + " " + url.indexOf(tabUrlArray[currentTabIndex]));
+					console.log("RAWRRAWRRAWR2:" + tabUrlArray[currentTabIndex].indexOf("?") + " " + tabUrlArray[currentTabIndex].indexOf(url));
+					if ((url.indexOf("&") !== -1) || (tabUrlArray[currentTabIndex].indexOf("&") !== -1)
+						|| (url.indexOf("?") !== -1 && url.indexOf(tabUrlArray[currentTabIndex]) !== -1)
+						|| (tabUrlArray[currentTabIndex].indexOf("?") === -1 && tabUrlArray[currentTabIndex].indexOf(url) !== -1)
+						|| (tabUrlArray[currentTabIndex].indexOf("?") !== -1 && tabUrlArray[currentTabIndex].indexOf(url) !== -1)) {
+					}
+					else {
 						// Create a new tab
 						createButton(null, getTitle(gmailUrl));
 
@@ -121,23 +118,20 @@ function init() {
 					}
 				}
 
-				if (emailClicked === false) {
-					//emailClicked = true;
-					currentTabIndex = tabArray.indexOf(currentTab);
+				currentTabIndex = tabArray.indexOf(currentTab);
 
-					// Update the tab url
-					tabUrlArray[currentTabIndex] = request.url;
+				// Update the tab url
+				tabUrlArray[currentTabIndex] = url;
 
-					// Update the title of the tab
-					tabTitleArray[currentTabIndex] = getTitle(tabUrlArray[currentTabIndex]);
+				// Update the title of the tab
+				tabTitleArray[currentTabIndex] = getTitle(tabUrlArray[currentTabIndex]);
 
-					updateTitle(currentTabIndex);
+				updateTitle(currentTabIndex);
 
-					// Save the titles
-					saveTitles();
+				// Save the titles
+				saveTitles();
 
-					console.log("Tab " + currentTab + " URL saved: " + request.url);
-				}
+				console.log("Tab " + currentTab + " URL saved: " + url);
 			}
 
 			// Save the urls
@@ -227,7 +221,12 @@ function closeTabClickHandler(e) {
 	// One of the tabs has been clicked
 	var tab = parseInt(id.toString().charAt(5));
 	var tabIndex = tabArray.indexOf(tab);
-	if (tab === currentTab && tabUrlArray[tabIndex] !== tabUrlArray[0])
+	var nextTabIndex;
+	if (tabIndex < tabArray.length-1)
+		nextTabIndex = tabIndex+1;
+	else
+		nextTabIndex = tabIndex-1;
+	if (tab === currentTab && tabUrlArray[tabIndex] !== tabUrlArray[nextTabIndex])
 		tabClicked = true;
 
 	removeTab(id);
@@ -397,7 +396,10 @@ function removeTab(name) {
 		if (currentTab === num) {
 			var prevTab = currentTab;
 			// Update the current tab
-			currentTab = tabArray[0];
+			if (tabIndex < tempTabArray.length-1)
+				currentTab = tabArray[tabIndex];
+			else
+				currentTab = tabArray[tabIndex-1];
 
 			// Update colors
 			updateColor(null);
