@@ -1,5 +1,6 @@
 # Gtabs
 
+## Description
 Gtabs adds email tabs to Gmail, which makes it easier for you to switch between emails.
 
 You can use it to:
@@ -9,3 +10,6 @@ You can use it to:
 
 ## How to Download + Install
 It is available to download on the Chrome Web Store [here](https://chrome.google.com/webstore/detail/gtabs/omlcganapboonfdekjpeogfcpaigldjm).
+
+## License
+The code is licensed underneath the MIT License.
